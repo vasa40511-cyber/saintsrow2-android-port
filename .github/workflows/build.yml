@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'game/**'
+      - 'patches/**'
       - '.github/workflows/build.yml'
 
 permissions:
