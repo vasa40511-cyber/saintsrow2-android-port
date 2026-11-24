@@ -1,15 +1,19 @@
-name: Build J2ME Loader HD
+name: Build Saints Row 2 Android APK
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - 'game/**'
+      - '.github/workflows/build.yml'
 
 permissions:
   contents: read
 
 jobs:
   build:
+    if: ${{ hashFiles('game/saintsrow2.jar') != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout port repository
@@ -20,6 +24,14 @@ jobs:
           repository: fuyijian/J2ME-Loader-HD
           ref: master
           path: j2me-loader-hd
+      - name: Prepare Saints Row 2 MIDlet
+        run: |
+          mkdir -p j2me-loader-hd/app/libs
+          mkdir -p j2me-loader-hd/app/src/midlet/resources/MIDLET-META-INF
+          cp game/saintsrow2.jar j2me-loader-hd/app/libs/saintsrow2.jar
+          unzip -oq game/saintsrow2.jar -d j2me-loader-hd/app/src/midlet/resources
+          cp j2me-loader-hd/app/src/midlet/resources/META-INF/MANIFEST.MF \
+             j2me-loader-hd/app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -29,15 +41,15 @@ jobs:
         uses: android-actions/setup-android@v3
       - name: Install Android SDK packages
         run: sdkmanager "platforms;android-37" "build-tools;37.0.0" "ndk;29.0.14206865"
-      - name: Build debug APK
+      - name: Build dedicated MIDlet APK
         working-directory: j2me-loader-hd
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleOpenDebug
+          ./gradlew --no-daemon assembleMidletDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: j2me-loader-hd-debug
-          path: j2me-loader-hd/app/build/outputs/apk/open/debug/*.apk
+          name: saints-row-2-apk
+          path: j2me-loader-hd/app/build/outputs/apk/midlet/debug/*.apk
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
