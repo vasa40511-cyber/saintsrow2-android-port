@@ -69,27 +69,36 @@ jobs:
           p = 'app/src/main/java/javax/microedition/shell/MicroActivity.java'
           s = open(p, encoding='utf-8').read()
           needle = 'microLoader = new MicroLoader(this, appPath);'
-          inject = '''// Pre-create a profile so the embedded MIDlet starts directly without the setup screen.
+          inject = '''// Keep a persistent profile but enforce the dedicated landscape game controls.
                   File profileDir = new File(getApplicationInfo().dataDir + "/files/configs/midlet");
                   if (!profileDir.exists() && !profileDir.mkdirs()) {
                       throw new IllegalStateException("Cannot create embedded MIDlet profile: " + profileDir);
                   }
-                  File profileFile = new File(profileDir, "config.json");
-                  if (!profileFile.exists()) {
-                      ru.playsoftware.j2meloader.config.ProfileModel profile =
-                              new ru.playsoftware.j2meloader.config.ProfileModel(profileDir);
-                      profile.forceFullscreen = true;
-                      profile.supersampling = 2;
-                      profile.showKeyboard = true;
-                      profile.vkType = 2;
-                      profile.touchInput = true;
-                      ru.playsoftware.j2meloader.config.ProfilesManager.saveConfig(profile);
+                  ru.playsoftware.j2meloader.config.ProfileModel profile =
+                          ru.playsoftware.j2meloader.config.ProfilesManager.loadConfig(profileDir);
+                  if (profile == null) {
+                      profile = new ru.playsoftware.j2meloader.config.ProfileModel(profileDir);
                   }
+                  profile.dir = profileDir;
+                  profile.forceFullscreen = true;
+                  profile.supersampling = 2;
+                  profile.orientation = 3;
+                  profile.showKeyboard = true;
+                  profile.vkType = 7;
+                  profile.vkButtonShape = javax.microedition.lcdui.keyboard.VirtualKeyboard.OVAL_SHAPE;
+                  profile.vkAlpha = 112;
+                  profile.vkHideDelay = 0;
+                  profile.vkForceOpacity = false;
+                  profile.touchInput = false;
+                  ru.playsoftware.j2meloader.config.ProfilesManager.saveConfig(profile);
+                  // Discard an old saved keypad layout so the new analog-stick layout is used.
+                  new File(profileDir, "VirtualKeyboardLayout").delete();
                   microLoader = new MicroLoader(this, appPath);'''
           if needle not in s:
               raise SystemExit("Could not locate MicroActivity MIDlet bootstrap point")
           open(p, 'w', encoding='utf-8').write(s.replace(needle, inject, 1))
           PY
+          python3 ../patches/apply_saintsrow2_customizations.py
           chmod +x gradlew
           ./gradlew --build-cache --parallel assembleMidletDebug
           APK=$(find app/build/outputs/apk/midlet/debug -name '*.apk' -print -quit)
@@ -112,13 +121,18 @@ jobs:
           disable-animations: true
           script: |
             APK=$(find j2me-loader-hd/app/build/outputs/apk/midlet/debug -name '*.apk' -print -quit)
+            PACKAGE=com.example.androidlet.saints_row_2.debug
             adb install "$APK"
-            adb shell am start -n com.example.androidlet.saints_row_2.debug/javax.microedition.shell.MicroActivity
-            sleep 25
-            adb logcat -d -s AndroidRuntime:E MicroActivity:D MicroLoader:D AppClassLoader:E MidletThread:E > /tmp/saintsrow2-logcat.txt
+            adb logcat -c
+            adb shell am start -n "$PACKAGE/javax.microedition.shell.MicroActivity"
+            sleep 30
+            adb logcat -d -s AndroidRuntime:E MicroActivity:D MicroLoader:D AppClassLoader:E MidletThread:E SaintsRowAudio:E MediaPlayer:E AudioTrack:E > /tmp/saintsrow2-logcat.txt
             cat /tmp/saintsrow2-logcat.txt
             if grep -q 'FATAL EXCEPTION' /tmp/saintsrow2-logcat.txt; then exit 1; fi
-            adb shell pidof com.example.androidlet.saints_row_2.debug
+            adb shell pidof "$PACKAGE"
+            adb exec-out screencap -p > /tmp/saintsrow2-screen.png
+            test -s /tmp/saintsrow2-screen.png
+            test "$(stat -c%s /tmp/saintsrow2-screen.png)" -gt 10000
       - name: Upload standalone game APK
         uses: actions/upload-artifact@v4
         with:
@@ -126,5 +140,7 @@ jobs:
           path: |
             j2me-loader-hd/app/build/outputs/apk/midlet/debug/*.apk
             /tmp/game-manifest.txt
+            /tmp/saintsrow2-logcat.txt
+            /tmp/saintsrow2-screen.png
           if-no-files-found: error
           retention-days: 14
