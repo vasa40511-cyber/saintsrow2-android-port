@@ -33,8 +33,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
       - name: Install Android SDK packages
         run: sdkmanager "platforms;android-37" "build-tools;37.0.0" "ndk;29.0.14206865"
       - name: Build base HD emulator APK
