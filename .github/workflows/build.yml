@@ -11,12 +11,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: saintsrow2-android-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout port repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Verify uploaded game archive
         run: |
           test -f game/saintsrow2_n95.jar
@@ -28,11 +34,13 @@ jobs:
           repository: fuyijian/J2ME-Loader-HD
           ref: master
           path: j2me-loader-hd
+          fetch-depth: 1
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
       - name: Bootstrap Android SDK command line tools
         uses: android-actions/setup-android@v3
         continue-on-error: true
@@ -48,7 +56,7 @@ jobs:
           sed -i "s/COMPILE_SDK = 37/COMPILE_SDK = 36/" build.gradle
           sed -i "s/ch.acra:acra-dialog:5.14.2/ch.acra:acra-dialog:5.13.1/" app/build.gradle
           chmod +x gradlew
-          ./gradlew --no-daemon assembleOpenDebug
+          ./gradlew --build-cache --parallel assembleOpenDebug
       - name: Upload verification outputs
         uses: actions/upload-artifact@v4
         with:
