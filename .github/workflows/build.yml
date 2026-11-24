@@ -105,6 +105,8 @@ jobs:
           import re
           p = Path('app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java')
           s = p.read_text(encoding='utf-8')
+          s = s.replace('\\t@Override\\n\\tprivate boolean isJoystickHit', '\\tprivate boolean isJoystickHit')
+          s = s.replace('\\tpublic void show() {', '\\t@Override\\n\\tpublic void show() {', 1)
           s, n = re.subn(r'(?m)^\s*@Override\s*\n(\s*public boolean pointerDragged\s*\()', r'\1', s)
           print(f'Removed incompatible pointerDragged override annotations: {n}')
           p.write_text(s, encoding='utf-8')
