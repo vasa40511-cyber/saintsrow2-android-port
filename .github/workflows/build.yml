@@ -57,10 +57,44 @@ jobs:
           sed -i "s/ch.acra:acra-dialog:5.14.2/ch.acra:acra-dialog:5.13.1/" app/build.gradle
           mkdir -p app/libs
           cp ../game/saintsrow2_n95.jar app/libs/saintsrow2_n95.jar
+          mkdir -p app/src/midlet/resources/MIDLET-META-INF
           unzip -p ../game/saintsrow2_n95.jar META-INF/MANIFEST.MF > app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF
           sed -i '/^dependencies {/a\    midletImplementation files("libs/saintsrow2_n95.jar")' app/build.gradle
+          cat >> app/build.gradle <<'GRADLE'
+          
+          // Bundle MIDlet resources at APK root so AppClassLoader.getResourceAsStream() can resolve them.
+          android.sourceSets.midlet.resources.srcDirs += ['src/midlet/resources']
+          GRADLE
+          python3 - <<'PY'
+          p = 'app/src/main/java/javax/microedition/shell/MicroActivity.java'
+          s = open(p, encoding='utf-8').read()
+          needle = 'microLoader = new MicroLoader(this, appPath);'
+          inject = '''// Pre-create a profile so the embedded MIDlet starts directly without the setup screen.
+                  File profileDir = new File(getApplicationInfo().dataDir + "/files/configs/midlet");
+                  if (!profileDir.exists() && !profileDir.mkdirs()) {
+                      throw new IllegalStateException("Cannot create embedded MIDlet profile: " + profileDir);
+                  }
+                  File profileFile = new File(profileDir, "config.json");
+                  if (!profileFile.exists()) {
+                      ru.playsoftware.j2meloader.config.ProfileModel profile =
+                              new ru.playsoftware.j2meloader.config.ProfileModel(profileDir);
+                      profile.forceFullscreen = true;
+                      profile.supersampling = 2;
+                      profile.showKeyboard = true;
+                      profile.touchInput = true;
+                      ru.playsoftware.j2meloader.config.ProfilesManager.saveConfig(profile);
+                  }
+                  microLoader = new MicroLoader(this, appPath);'''
+          if needle not in s:
+              raise SystemExit("Could not locate MicroActivity MIDlet bootstrap point")
+          open(p, 'w', encoding='utf-8').write(s.replace(needle, inject, 1))
+          PY
           chmod +x gradlew
           ./gradlew --build-cache --parallel assembleMidletDebug
+          APK=$(find app/build/outputs/apk/midlet/debug -name '*.apk' -print -quit)
+          test -n "$APK"
+          echo "APK=$APK"
+          unzip -l "$APK" | grep -E 'MIDLET-META-INF/MANIFEST.MF|Title.png|Mainmenu.png|SaintsRow2' | head -30
       - name: Upload standalone game APK
         uses: actions/upload-artifact@v4
         with:
