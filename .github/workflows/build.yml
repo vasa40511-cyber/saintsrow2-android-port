@@ -61,7 +61,7 @@ jobs:
           unzip -p ../game/saintsrow2_n95.jar META-INF/MANIFEST.MF > app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF
           sed -i '/^dependencies {/a\    midletImplementation files("libs/saintsrow2_n95.jar")' app/build.gradle
           cat >> app/build.gradle <<'GRADLE'
-          
+
           // Bundle MIDlet resources at APK root so AppClassLoader.getResourceAsStream() can resolve them.
           android.sourceSets.midlet.resources.srcDirs += ['src/midlet/resources']
           GRADLE
@@ -81,7 +81,7 @@ jobs:
                       profile.forceFullscreen = true;
                       profile.supersampling = 2;
                       profile.showKeyboard = true;
-                      profile.vkType = 2; // phone-style directional pad plus A/B/C/D buttons
+                      profile.vkType = 2;
                       profile.touchInput = true;
                       ru.playsoftware.j2meloader.config.ProfilesManager.saveConfig(profile);
                   }
@@ -99,34 +99,8 @@ jobs:
           : > /tmp/all-dex-strings.txt
           while IFS= read -r dex; do
             unzip -p "$APK" "$dex" | strings >> /tmp/all-dex-strings.txt
-          done < <(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?\\.dex
-      - name: Smoke-test game launch on Android emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          arch: x86_64
-          profile: pixel_2
-          disable-animations: true
-          script: |
-            APK=$(find j2me-loader-hd/app/build/outputs/apk/midlet/debug -name '*.apk' -print -quit)
-            adb install "$APK"
-            adb shell am start -n com.example.androidlet.saints_row_2.debug/javax.microedition.shell.MicroActivity
-            sleep 25
-            adb logcat -d -s AndroidRuntime:E MicroActivity:D MicroLoader:D AppClassLoader:E MidletThread:E > /tmp/saintsrow2-logcat.txt
-            cat /tmp/saintsrow2-logcat.txt
-            if grep -q 'FATAL EXCEPTION' /tmp/saintsrow2-logcat.txt; then exit 1; fi
-            adb shell pidof com.example.androidlet.saints_row_2.debug
-      - name: Upload standalone game APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: saints-row-2-android-apk-candidate
-          path: |
-            j2me-loader-hd/app/build/outputs/apk/midlet/debug/*.apk
-            /tmp/game-manifest.txt
-          if-no-files-found: error
-          retention-days: 14
-)
-          grep 'LSaintsRow2;' /tmp/all-dex-strings.txt
+          done < <(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?[.]dex$')
+          grep -F 'LSaintsRow2;' /tmp/all-dex-strings.txt
           unzip -Z1 "$APK" > /tmp/apk-files.txt
           grep -F 'MIDLET-META-INF/MANIFEST.MF' /tmp/apk-files.txt
       - name: Smoke-test game launch on Android emulator
