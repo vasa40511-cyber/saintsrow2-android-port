@@ -99,6 +99,17 @@ jobs:
           open(p, 'w', encoding='utf-8').write(s.replace(needle, inject, 1))
           PY
           python3 ../patches/apply_saintsrow2_customizations.py
+          # Overlay.pointerDragged is not part of every upstream interface revision.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java')
+          s = p.read_text(encoding='utf-8')
+          s, n = re.subn(r'(?m)^\\s*@Override\\s*\\n(\\s*public boolean pointerDragged\\s*\\()', r'\\1', s)
+          print(f'Removed incompatible pointerDragged override annotations: {n}')
+          p.write_text(s, encoding='utf-8')
+          PY
+          nl -ba app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java | sed -n '1188,1208p'
           chmod +x gradlew
           ./gradlew --build-cache --parallel assembleMidletDebug
           APK=$(find app/build/outputs/apk/midlet/debug -name '*.apk' -print -quit)
