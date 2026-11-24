@@ -314,8 +314,8 @@ replace_once(vk_path,
     "\t\tkeypad[KEY_D] = new VirtualKey(Canvas.KEY_SEND, \"D\");\n",
     "\t\tkeypad[KEY_D] = new VirtualKey(Canvas.KEY_STAR, \"D\");\n")
 replace_once(vk_path,
-    "\tfinal String label;\n",
-    "\tString label;\n")
+    "\t\tfinal String label;\n",
+    "\t\tString label;\n")
 replace_once(vk_path,
     "\tprivate void resetLayout(int variant) {\n",
     """\tprivate void resetLayout(int variant) {
