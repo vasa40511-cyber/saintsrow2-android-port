@@ -50,19 +50,23 @@ jobs:
           echo "/usr/local/lib/android/sdk/cmdline-tools/16.0/bin" >> "$GITHUB_PATH"
       - name: Install Android SDK packages
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;29.0.14206865"
-      - name: Build base HD emulator APK
+      - name: Prepare standalone Saints Row MIDlet build
         working-directory: j2me-loader-hd
         run: |
           sed -i "s/COMPILE_SDK = 37/COMPILE_SDK = 36/" build.gradle
           sed -i "s/ch.acra:acra-dialog:5.14.2/ch.acra:acra-dialog:5.13.1/" app/build.gradle
+          mkdir -p app/libs
+          cp ../game/saintsrow2_n95.jar app/libs/saintsrow2_n95.jar
+          unzip -p ../game/saintsrow2_n95.jar META-INF/MANIFEST.MF > app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF
+          sed -i '/^dependencies {/a\    midletImplementation files("libs/saintsrow2_n95.jar")' app/build.gradle
           chmod +x gradlew
-          ./gradlew --build-cache --parallel assembleOpenDebug
-      - name: Upload verification outputs
+          ./gradlew --build-cache --parallel assembleMidletDebug
+      - name: Upload standalone game APK
         uses: actions/upload-artifact@v4
         with:
-          name: j2me-loader-hd-validation
+          name: saints-row-2-android-apk-candidate
           path: |
-            j2me-loader-hd/app/build/outputs/apk/open/debug/*.apk
+            j2me-loader-hd/app/build/outputs/apk/midlet/debug/*.apk
             /tmp/game-manifest.txt
           if-no-files-found: error
           retention-days: 14
