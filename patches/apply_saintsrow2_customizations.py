@@ -164,8 +164,7 @@ replace_once(vk_path,
     """\t@Override
 \tpublic boolean pointerDragged(int pointer, float x, float y) {
 \t\tswitch (layoutEditMode) {""",
-    """\t@Override
-\tpublic boolean pointerDragged(int pointer, float x, float y) {
+    """\tpublic boolean pointerDragged(int pointer, float x, float y) {
 \t\tif (layoutVariant == TYPE_SAINTS_ROW && pointer == joystickPointer) {
 \t\t\tupdateJoystick(x, y);
 \t\t\toverlayView.postInvalidate();
