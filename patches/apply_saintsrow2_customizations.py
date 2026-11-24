@@ -203,7 +203,12 @@ replace_once(vk_path,
 \t\t\tVirtualKey key = associatedKeys[i];
 \t\t\tif (key != null) {
 \t\t\t\tassociatedKeys[i] = null;
-\t\t\t\tkey.onUp();
+\t\t\t\tif (target != null) {
+\t\t\t\t\tkey.onUp();
+\t\t\t\t} else {
+\t\t\t\t\tkey.selected = false;
+\t\t\t\t\thandler.removeCallbacks(key);
+\t\t\t\t}
 \t\t\t}
 \t\t}
 \t\tfor (VirtualKey key : keypad) {
