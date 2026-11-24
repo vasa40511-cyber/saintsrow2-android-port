@@ -86,7 +86,6 @@ jobs:
                   profile.orientation = 3;
                   profile.showKeyboard = true;
                   profile.vkType = 7;
-                  profile.vkButtonShape = javax.microedition.lcdui.keyboard.VirtualKeyboard.OVAL_SHAPE;
                   profile.vkAlpha = 112;
                   profile.vkHideDelay = 0;
                   profile.vkForceOpacity = false;
