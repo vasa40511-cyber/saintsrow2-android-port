@@ -374,6 +374,18 @@ replace_once(android_path,
 \t}
 
 \t@Override
+\tpublic void pause() {
+\t\tif (!loaded) {
+\t\t\treturn;
+\t\t}
+\t\ttry {
+\t\t\tsuper.pause();
+\t\t} catch (IllegalStateException e) {
+\t\t\tLog.w(TAG, "MediaPlayer pause ignored in its current state", e);
+\t\t}
+\t}
+
+\t@Override
 \tpublic void reset() {
 \t\ttry {
 \t\t\tsuper.reset();
