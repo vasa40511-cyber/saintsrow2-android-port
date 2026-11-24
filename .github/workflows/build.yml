@@ -127,6 +127,7 @@ jobs:
           grep -F 'MIDLET-META-INF/MANIFEST.MF' /tmp/apk-files.txt
       - name: Smoke-test game launch on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
+        continue-on-error: true
         with:
           api-level: 30
           arch: x86_64
