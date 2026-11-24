@@ -1,0 +1,43 @@
+name: Build J2ME Loader HD
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout port repository
+        uses: actions/checkout@v4
+      - name: Checkout J2ME Loader HD
+        uses: actions/checkout@v4
+        with:
+          repository: fuyijian/J2ME-Loader-HD
+          ref: master
+          path: j2me-loader-hd
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-37" "build-tools;37.0.0" "ndk;29.0.14206865"
+      - name: Build debug APK
+        working-directory: j2me-loader-hd
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleOpenDebug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: j2me-loader-hd-debug
+          path: j2me-loader-hd/app/build/outputs/apk/open/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
