@@ -50,6 +50,8 @@ replace_once(vk_path,
 \t\t\t\tsetSnap(KEY_B, SCREEN, RectSnap.INT_EAST, true);
 \t\t\t\tsetSnap(KEY_C, SCREEN, RectSnap.INT_SOUTHEAST, true);
 \t\t\t\tsetSnap(KEY_D, SCREEN, RectSnap.INT_SOUTH, true);
+\t\t\t\tsetSnap(KEY_SOFT_LEFT, SCREEN, RectSnap.NO_SNAP, true);
+\t\t\t\tsetSnap(KEY_SOFT_RIGHT, SCREEN, RectSnap.NO_SNAP, true);
 \t\t\t\tbreak;
 \t\t}
 \t}
@@ -74,6 +76,12 @@ replace_once(vk_path,
 \t\t\tplaceKey(KEY_B, actionX + spread, actionY, buttonSize);
 \t\t\tplaceKey(KEY_C, actionX, actionY + spread, buttonSize);
 \t\t\tplaceKey(KEY_D, actionX - spread, actionY, buttonSize);
+\t\t\tfloat systemButtonSize = buttonSize * 0.78f;
+\t\t\tfloat systemButtonY = screen.bottom - systemButtonSize * 0.72f;
+\t\t\tplaceKey(KEY_SOFT_LEFT, screen.right - systemButtonSize * 2.35f,
+\t\t\t\tsystemButtonY, systemButtonSize);
+\t\t\tplaceKey(KEY_SOFT_RIGHT, screen.right - systemButtonSize * 0.95f,
+\t\t\t\tsystemButtonY, systemButtonSize);
 
 \t\t\tjoystickCenterX = screen.left + h * 0.20f;
 \t\t\tjoystickCenterY = screen.centerY();
@@ -292,6 +300,28 @@ replace_once(vk_path,
     """\t\t\tint alpha = (layoutVariant == TYPE_SAINTS_ROW
 \t\t\t\t\t? Math.max(settings.vkAlpha, 0x70)
 \t\t\t\t\t: (opaque || layoutEditMode != LAYOUT_EOF ? 0xFF : Math.max(settings.vkAlpha, 0xC0))) << 24;""")
+
+replace_once(vk_path,
+    "\t\tkeypad[KEY_A] = new VirtualKey(SE_KEY_SPECIAL_GAMING_A, \"A\");\n",
+    "\t\tkeypad[KEY_A] = new VirtualKey(Canvas.KEY_NUM1, \"A\");\n")
+replace_once(vk_path,
+    "\t\tkeypad[KEY_B] = new VirtualKey(SE_KEY_SPECIAL_GAMING_B, \"B\");\n",
+    "\t\tkeypad[KEY_B] = new VirtualKey(Canvas.KEY_POUND, \"B\");\n")
+replace_once(vk_path,
+    "\t\tkeypad[KEY_C] = new VirtualKey(Canvas.KEY_END, \"C\");\n",
+    "\t\tkeypad[KEY_C] = new VirtualKey(Canvas.KEY_FIRE, \"C\");\n")
+replace_once(vk_path,
+    "\t\tkeypad[KEY_D] = new VirtualKey(Canvas.KEY_SEND, \"D\");\n",
+    "\t\tkeypad[KEY_D] = new VirtualKey(Canvas.KEY_STAR, \"D\");\n")
+replace_once(vk_path,
+    "\tfinal String label;\n",
+    "\tString label;\n")
+replace_once(vk_path,
+    "\tprivate void resetLayout(int variant) {\n",
+    """\tprivate void resetLayout(int variant) {
+\t\tkeypad[KEY_SOFT_LEFT].label = variant == TYPE_SAINTS_ROW ? "SELECT" : "L";
+\t\tkeypad[KEY_SOFT_RIGHT].label = variant == TYPE_SAINTS_ROW ? "START" : "R";
+""")
 
 android_path = "javax/microedition/media/AndroidPlayer.java"
 replace_once(android_path,
