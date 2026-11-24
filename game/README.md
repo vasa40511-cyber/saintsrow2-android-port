@@ -1,0 +1,1 @@
+Upload the original game JAR here as `saintsrow2.jar` (path: `game/saintsrow2.jar`). Keep the original archive unchanged. Adding the JAR to `main` automatically starts the Android APK build.
